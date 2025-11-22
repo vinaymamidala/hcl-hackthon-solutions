@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: patient-service
+spec:
+  selector:
+    app: patient-service
+  ports:
+    - protocol: TCP
+      port: 3080        # Exposes port 80 for internal traffic
+      targetPort: 3001 # Internal container port
+  type: ClusterIP     # For internal use only
+

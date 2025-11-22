@@ -1,0 +1,27 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: patient-service-ingress
+  namespace: default                      # Change to your namespace if different
+  annotations:
+    kubernetes.io/ingress.class: "nginx"  # Assuming you're using NGINX Ingress
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+spec:
+  rules:
+    - host: patient.example.com            # Change to the domain you want (or omit)
+      http:
+        paths:
+          - path: /?(.*)                    # Matches all paths
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: patient-service       # Change this to the Kubernetes Service name for patient-service
+                port:
+                  number: 8080               # Change this to the target port of your service
+
+  # Uncomment this section if you want to use TLS
+  # tls:
+  #   - hosts:
+  #       - patient.example.com
+  #     secretName: patient-tls-secret       # Change to your TLS secret name
+
