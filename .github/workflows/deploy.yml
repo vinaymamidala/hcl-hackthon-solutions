@@ -1,0 +1,44 @@
+name: Deploy to GKE
+
+on:
+  push:
+    branches:
+      - main  # This triggers the workflow when changes are pushed to the 'main' branch.
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Step 1: Checkout the code
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    # Step 2: Set up Google Cloud SDK
+    - name: Set up Google Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2
+      with:
+        version: '410.0.0'
+        project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+    # Step 3: Authenticate to Google Cloud with Service Account Key
+    - name: Authenticate to Google Cloud
+      run: echo ${{ secrets.GCP_SA_KEY }} | gcloud auth activate-service-account --key-file=-
+
+    # Step 4: Build Docker image
+    - name: Build Docker image
+      run: |
+        docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/hackathon-usecase:${{ github.sha }} .
+        docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/hackathon-usecase:${{ github.sha }}
+
+    # Step 5: Get GKE credentials
+    - name: Get GKE credentials
+      run: |
+        gcloud container clusters get-credentials my-cluster --zone us-central1-a --project ${{ secrets.GCP_PROJECT_ID }}
+
+    # Step 6: Deploy to GKE
+    - name: Deploy to GKE
+      run: |
+        kubectl set image deployment/hackathon-deployment hackathon-usecase=gcr.io/${{ secrets.GCP_PROJECT_ID }}/hackathon-usecase:${{ github.sha }}
+        kubectl rollout status deployment/hackathon-deployment
+
